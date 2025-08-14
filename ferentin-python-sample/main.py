@@ -194,10 +194,16 @@ async def login(request: Request):
         
         # Generate PKCE parameters
         code_verifier, code_challenge = generate_pkce_challenge()
-        state = secrets.token_urlsafe(32)
-        
-        # Store PKCE parameters in temporary session (you might want to use a more robust approach)
         temp_session_id = secrets.token_urlsafe(16)
+        
+        # Encode temp_session_id in the state parameter
+        state_data = {
+            "temp_session": temp_session_id,
+            "random": secrets.token_urlsafe(16)
+        }
+        state = serializer.dumps(state_data)
+        
+        # Store PKCE parameters in temporary session
         sessions[f"temp_{temp_session_id}"] = {
             "code_verifier": code_verifier,
             "state": state,
@@ -213,7 +219,6 @@ async def login(request: Request):
             "state": state,
             "code_challenge": code_challenge,
             "code_challenge_method": "plain",  # Use S256 in production
-            "temp_session": temp_session_id
         }
         
         auth_url = f"{authorization_endpoint}?{urllib.parse.urlencode(params)}"
@@ -223,20 +228,30 @@ async def login(request: Request):
         raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
 @app.get("/bff/callback")
-async def callback(request: Request, code: str, state: str, temp_session: str):
+async def callback(request: Request, code: str, state: str):
     """Handle OIDC callback and exchange code for tokens."""
     try:
+        # Decode state parameter to get temp_session
+        try:
+            state_data = serializer.loads(state, max_age=600)  # 10 minutes max
+            temp_session_id = state_data.get("temp_session")
+        except BadSignature:
+            raise OIDCError("Invalid or expired state parameter")
+        
+        if not temp_session_id:
+            raise OIDCError("Missing temp_session in state")
+        
         # Retrieve temporary session
-        temp_session_data = sessions.get(f"temp_{temp_session}")
+        temp_session_data = sessions.get(f"temp_{temp_session_id}")
         if not temp_session_data:
             raise OIDCError("Invalid or expired temporary session")
         
-        # Verify state parameter
+        # Verify state parameter matches what we stored
         if state != temp_session_data.get("state"):
             raise OIDCError("Invalid state parameter")
         
         # Clean up temporary session
-        sessions.pop(f"temp_{temp_session}", None)
+        sessions.pop(f"temp_{temp_session_id}", None)
         
         config = await get_oidc_config()
         token_endpoint = config.get("token_endpoint")
@@ -299,9 +314,13 @@ async def callback(request: Request, code: str, state: str, temp_session: str):
         
         return response
         
+    except OIDCError as e:
+        # Redirect to frontend with OIDC-specific error
+        error_url = f"{FRONTEND_ORIGIN}?error={urllib.parse.quote(f'OIDC Error: {str(e)}')}"
+        return RedirectResponse(url=error_url)
     except Exception as e:
-        # Redirect to frontend with error
-        error_url = f"{FRONTEND_ORIGIN}?error={urllib.parse.quote(str(e))}"
+        # Redirect to frontend with general error
+        error_url = f"{FRONTEND_ORIGIN}?error={urllib.parse.quote(f'Authentication failed: {str(e)}')}"
         return RedirectResponse(url=error_url)
 
 @app.get("/bff/me")
