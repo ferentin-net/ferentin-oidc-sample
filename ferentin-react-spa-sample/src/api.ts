@@ -124,6 +124,19 @@ class ApiClient {
     return this.request('/bff/api/v1/models');
   }
 
+  // Chat with a specific model
+  async chatWithModel(modelId: string, message: string = "Hello How do you do?"): Promise<any> {
+    return this.request('/bff/api/v1/chat/completions', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: modelId,
+        messages: [
+          { role: "user", content: message }
+        ]
+      })
+    });
+  }
+
   // Generic API proxy method
   async apiCall<T>(path: string, options: RequestInit = {}): Promise<T> {
     return this.request<T>(`/bff/api${path}`, options);

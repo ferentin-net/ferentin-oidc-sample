@@ -7,6 +7,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [apiResult, setApiResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [firstModelId, setFirstModelId] = useState<string | null>(null)
 
   // Check authentication status on mount
   useEffect(() => {
@@ -46,10 +47,12 @@ function App() {
     try {
       setError(null)
       setApiResult('Loading...')
+      setFirstModelId(null) // Reset model ID when switching to different API
       const result = await api.callProtectedApi()
       setApiResult(JSON.stringify(result, null, 2))
     } catch (err) {
       setApiResult(null)
+      setFirstModelId(null)
       if (err instanceof ApiError && err.status === 401) {
         setError('Authentication required - please log in')
         setAuthStatus({ authenticated: false })
@@ -63,7 +66,37 @@ function App() {
     try {
       setError(null)
       setApiResult('Loading models...')
+      setFirstModelId(null) // Reset model ID
       const result = await api.getModels()
+      
+      // Extract first model ID if available
+      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+        const firstModel = result.data[0]
+        if (firstModel && firstModel.id) {
+          setFirstModelId(firstModel.id)
+        }
+      }
+      
+      setApiResult(JSON.stringify(result, null, 2))
+    } catch (err) {
+      setApiResult(null)
+      setFirstModelId(null)
+      if (err instanceof ApiError && err.status === 401) {
+        setError('Authentication required - please log in')
+        setAuthStatus({ authenticated: false })
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to get models')
+      }
+    }
+  }
+
+  const handleChatWithModel = async () => {
+    if (!firstModelId) return
+    
+    try {
+      setError(null)
+      setApiResult(`Chatting with ${firstModelId}...`)
+      const result = await api.chatWithModel(firstModelId)
       setApiResult(JSON.stringify(result, null, 2))
     } catch (err) {
       setApiResult(null)
@@ -71,7 +104,7 @@ function App() {
         setError('Authentication required - please log in')
         setAuthStatus({ authenticated: false })
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to get models')
+        setError(err instanceof Error ? err.message : 'Failed to chat with model')
       }
     }
   }
@@ -165,6 +198,15 @@ function App() {
               >
                 Get Models
               </button>
+              {firstModelId && (
+                <button 
+                  onClick={handleChatWithModel} 
+                  className="btn btn-primary"
+                  disabled={!authStatus.authenticated}
+                >
+                  Chat with {firstModelId}
+                </button>
+              )}
             </div>
 
             {apiResult && (
