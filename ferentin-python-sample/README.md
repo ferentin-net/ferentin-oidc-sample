@@ -42,7 +42,7 @@ Configure your `.env` file with the following variables:
 
 ```bash
 # Required
-OIDC_ISSUER=https://your-oidc-provider.com
+OIDC_ISSUER=https://auth.ferentin.net/tenant/{your-tenant-id}
 OIDC_CLIENT_ID=your-client-id
 
 # Optional but recommended
@@ -54,7 +54,7 @@ FRONTEND_ORIGIN=http://localhost:5173
 REDIRECT_PATH=/bff/callback
 
 # Optional API proxying
-API_BASE_URL=https://your-api.com
+API_BASE_URL=https://api.ferentin.net
 
 # Optional custom scopes (defaults to "openid profile email")
 OIDC_SCOPES=openid profile email
@@ -135,10 +135,10 @@ The BFF will start on `http://localhost:8000`
 
 ```bash
 # With auto-reload
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host localhost --port 8000
 
 # With debug logging
-uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-level debug
+uvicorn main:app --reload --host localhost --port 8000 --log-level debug
 ```
 
 ### Testing with curl
