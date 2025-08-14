@@ -205,7 +205,7 @@ For production deployment:
 
 This repository serves as a reference implementation. Feel free to:
 
-- Fork and adapt for your OIDC provider
+- Fork and adapt for your Ferentin tenant
 - Submit issues for bugs or improvements
 - Contribute documentation or examples
 
