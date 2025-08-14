@@ -59,6 +59,23 @@ function App() {
     }
   }
 
+  const handleGetModels = async () => {
+    try {
+      setError(null)
+      setApiResult('Loading models...')
+      const result = await api.getModels()
+      setApiResult(JSON.stringify(result, null, 2))
+    } catch (err) {
+      setApiResult(null)
+      if (err instanceof ApiError && err.status === 401) {
+        setError('Authentication required - please log in')
+        setAuthStatus({ authenticated: false })
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to get models')
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="app">
@@ -140,6 +157,13 @@ function App() {
                 disabled={!authStatus.authenticated}
               >
                 Call Protected API
+              </button>
+              <button 
+                onClick={handleGetModels} 
+                className="btn btn-primary"
+                disabled={!authStatus.authenticated}
+              >
+                Get Models
               </button>
             </div>
 

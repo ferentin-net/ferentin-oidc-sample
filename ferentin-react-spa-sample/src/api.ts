@@ -119,6 +119,11 @@ class ApiClient {
     return this.request('/bff/api/example');
   }
 
+  // Get available models
+  async getModels(): Promise<any> {
+    return this.request('/bff/api/v1/models');
+  }
+
   // Generic API proxy method
   async apiCall<T>(path: string, options: RequestInit = {}): Promise<T> {
     return this.request<T>(`/bff/api${path}`, options);
