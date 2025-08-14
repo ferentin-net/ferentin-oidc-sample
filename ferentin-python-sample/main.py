@@ -140,6 +140,11 @@ def require_csrf(request: Request, session: Dict[str, Any] = Depends(require_ses
     if not csrf_header or not expected_csrf or csrf_header != expected_csrf:
         raise HTTPException(status_code=403, detail="Invalid CSRF token")
 
+def require_csrf_for_writes(request: Request, session: Dict[str, Any] = Depends(require_session)) -> None:
+    """Dependency to require valid CSRF token only for write operations."""
+    if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+        require_csrf(request, session)
+
 async def refresh_tokens_if_needed(session: Dict[str, Any]) -> None:
     """Refresh access token if it's close to expiry."""
     tokens = session.get("tokens", {})
@@ -386,7 +391,7 @@ async def proxy_api(
     path: str,
     request: Request,
     session: Dict[str, Any] = Depends(require_session),
-    _: None = Depends(lambda r, s=Depends(require_session): require_csrf(r, s) if r.method in ["POST", "PUT", "DELETE", "PATCH"] else None)
+    _: None = Depends(require_csrf_for_writes)
 ):
     """Proxy API calls to protected backend services."""
     if not API_BASE_URL:
