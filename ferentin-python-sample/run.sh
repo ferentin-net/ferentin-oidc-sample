@@ -17,4 +17,4 @@ if [ ! -f .env ]; then
 fi
 
 # Start the server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host localhost --port 8000

@@ -119,7 +119,7 @@ OIDC_CLIENT_ID=your-client-id
 OIDC_CLIENT_SECRET=your-client-secret  # Optional for public clients
 FRONTEND_ORIGIN=http://localhost:5173
 REDIRECT_PATH=/bff/callback
-API_BASE_URL=https://your-api.com  # Optional, for proxying API calls
+API_BASE_URL=https://api.ferentin.net/v1/models  # Optional, for proxying API calls
 ```
 
 ## Project Structure
@@ -169,6 +169,7 @@ The React app includes an API client (`src/api.ts`) that:
 
 ```bash
 cd ferentin-react-spa-sample
+npm install          # install dependencies
 npm run dev          # Start dev server
 npm run build        # Build for production
 npm run preview      # Preview production build
